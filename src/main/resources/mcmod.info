@@ -1,0 +1,16 @@
+[
+{
+  "modid": "timberjack",
+  "name": "Timberjack",
+  "description": "Natural tree felling.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["CovertJaguar"],
+  "credits": "SethBling's BlingTrees for the inspiration",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
