@@ -66,29 +66,35 @@ public class TimberjackEventHandler {
         World world = event.getWorld();
         if (event.getState().getBlock().isWood(world, event.getPos())) {
             BlockPos base = event.getPos();
-            Multimap<BlockPos, BlockPos> logSets = HashMultimap.create();
-            logSets.put(base, base);
+            Tree tree = new Tree();
+            tree.logSets.put(base, base);
             BlockPos.MutableBlockPos targetPos = new BlockPos.MutableBlockPos();
             for (int y = 0; y <= 1; ++y) {
                 for (int x = -1; x <= 1; ++x) {
                     for (int z = -1; z <= 1; ++z) {
                         targetPos.setPos(base.getX() + x, base.getY() + y, base.getZ() + z);
-                        if (logSets.containsValue(targetPos))
+                        if (tree.logSets.containsValue(targetPos))
                             continue;
                         IBlockState targetState = world.getBlockState(targetPos);
                         if (targetState.getBlock().isWood(world, targetPos)) {
                             BlockPos immutable = targetPos.toImmutable();
-                            logSets.put(immutable, base);
-                            logSets.put(immutable, immutable);
-                            Collection<BlockPos> logs = logSets.get(immutable);
-                            if (expandLogsAndCanFell(world, logs, targetPos)) {
-                                chopQueue.computeIfAbsent(world, w -> new LinkedList<>()).add(new TreeSet<>(logs));
+                            tree.logSets.put(immutable, base);
+                            tree.logSets.put(immutable, immutable);
+                            Collection<BlockPos> logs = tree.logSets.get(immutable);
+                            if (expandLogsAndCanFell(world, tree, logs, targetPos)) {
+                                if (tree.foundLeaves)
+                                    chopQueue.computeIfAbsent(world, w -> new LinkedList<>()).add(new TreeSet<>(logs));
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    private static class Tree {
+        private Multimap<BlockPos, BlockPos> logSets = HashMultimap.create();
+        private boolean foundLeaves;
     }
 
     private void chop(World world, BlockPos pos) {
@@ -118,7 +124,7 @@ public class TimberjackEventHandler {
         world.spawnEntityInWorld(entity);
     }
 
-    private boolean expandLogsAndCanFell(World world, Collection<BlockPos> logs, BlockPos last) {
+    private boolean expandLogsAndCanFell(World world, Tree tree, Collection<BlockPos> logs, BlockPos last) {
         if (logs.size() > MAX_LOGS)
             return true;
         BlockPos.MutableBlockPos targetPos = new BlockPos.MutableBlockPos();
@@ -139,9 +145,10 @@ public class TimberjackEventHandler {
                     if (targetState.getBlock().isWood(world, targetPos)) {
                         BlockPos immutable = targetPos.toImmutable();
                         logs.add(immutable);
-                        if (!expandLogsAndCanFell(world, logs, immutable))
+                        if (!expandLogsAndCanFell(world, tree, logs, immutable))
                             return false;
-                    }
+                    } else if (!tree.foundLeaves && targetState.getBlock().isLeaves(targetState, world, targetPos))
+                        tree.foundLeaves = true;
                 }
             }
         }
