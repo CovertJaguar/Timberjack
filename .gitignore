@@ -26,6 +26,7 @@ run
 forge-.*-changelog.txt
 Thumbs.db
 desktop.ini
+classes/
 
 # java
 *.class
