@@ -25,7 +25,7 @@ import java.util.*;
 public class TimberjackEventHandler {
 
     private static final int MAX_LOGS = 500;
-    private static Map<World, Collection<TreeSet<BlockPos>>> chopQueue = new MapMaker().weakKeys().makeMap();
+    private static Map<World, Collection<Tree>> chopQueue = new MapMaker().weakKeys().makeMap();
 
     @SubscribeEvent
     public void tick(TickEvent.WorldTickEvent event) {
@@ -33,17 +33,17 @@ public class TimberjackEventHandler {
 //            long worldTime = event.world.getTotalWorldTime();
 //            if (worldTime % 4 != 0)
 //                return;
-            Collection<TreeSet<BlockPos>> choppedTrees = chopQueue.get(event.world);
+            Collection<Tree> choppedTrees = chopQueue.get(event.world);
             if (choppedTrees != null) {
                 choppedTrees.forEach(tree -> {
-                    Iterator<BlockPos> it = tree.iterator();
+                    Iterator<BlockPos> it = tree.choppable.iterator();
                     for (int counter = 0; counter < 1 && it.hasNext(); counter++) {
                         BlockPos log = it.next();
-                        chop(event.world, log);
+                        chop(event.world, tree, log);
                         it.remove();
                     }
                 });
-                choppedTrees.removeIf(TreeSet::isEmpty);
+                choppedTrees.removeIf(tree -> tree.choppable.isEmpty());
             }
             chopQueue.values().removeIf(Collection::isEmpty);
         }
@@ -83,21 +83,24 @@ public class TimberjackEventHandler {
                             Collection<BlockPos> logs = tree.logSets.get(immutable);
                             if (expandLogsAndCanFell(world, tree, logs, targetPos)) {
                                 if (tree.foundLeaves)
-                                    chopQueue.computeIfAbsent(world, w -> new LinkedList<>()).add(new TreeSet<>(logs));
+                                    tree.choppable.addAll(logs);
                             }
                         }
                     }
                 }
             }
+            if (!tree.choppable.isEmpty())
+                chopQueue.computeIfAbsent(world, w -> new LinkedList<>()).add(tree);
         }
     }
 
     private static class Tree {
         private Multimap<BlockPos, BlockPos> logSets = HashMultimap.create();
+        private Set<BlockPos> choppable = new TreeSet<>();
         private boolean foundLeaves;
     }
 
-    private void chop(World world, BlockPos pos) {
+    private void chop(World world, Tree tree, BlockPos pos) {
 //        world.destroyBlock(pos, true);
         spawnFalling(world, pos, world.getBlockState(pos), true);
         BlockPos.MutableBlockPos targetPos = new BlockPos.MutableBlockPos();
@@ -110,6 +113,16 @@ public class TimberjackEventHandler {
 //                        world.destroyBlock(targetPos, false);
                         spawnFalling(world, targetPos, targetState, false);
                     }
+                }
+            }
+        }
+        for (int y = -2; y <= 2; ++y) {
+            for (int x = -2; x <= 2; ++x) {
+                for (int z = -2; z <= 2; ++z) {
+                    targetPos.setPos(pos.getX() + x, pos.getY() + y, pos.getZ() + z);
+                    IBlockState targetState = world.getBlockState(targetPos);
+                    if (!tree.logSets.containsValue(targetPos) && targetState.getBlock().isWood(world, targetPos))
+                        spawnFalling(world, targetPos, targetState, true);
                 }
             }
         }
