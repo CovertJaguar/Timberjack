@@ -64,19 +64,19 @@ public class TimberjackEventHandler {
     @SubscribeEvent
     public void chopEvent(BlockEvent.BreakEvent event) {
         World world = event.getWorld();
-        if (event.getState().getBlock().isWood(world, event.getPos())) {
+        if (isWood(event.getState(), world, event.getPos())) {
             BlockPos base = event.getPos();
             Tree tree = new Tree();
             tree.logSets.put(base, base);
             BlockPos.MutableBlockPos targetPos = new BlockPos.MutableBlockPos();
-            for (int y = 0; y <= 1; ++y) {
+            for (int y = -1; y <= 1; ++y) {
                 for (int x = -1; x <= 1; ++x) {
                     for (int z = -1; z <= 1; ++z) {
                         targetPos.setPos(base.getX() + x, base.getY() + y, base.getZ() + z);
                         if (tree.logSets.containsValue(targetPos))
                             continue;
                         IBlockState targetState = world.getBlockState(targetPos);
-                        if (targetState.getBlock().isWood(world, targetPos)) {
+                        if (isWood(targetState, world, targetPos)) {
                             BlockPos immutable = targetPos.toImmutable();
                             tree.logSets.put(immutable, base);
                             tree.logSets.put(immutable, immutable);
@@ -109,23 +109,26 @@ public class TimberjackEventHandler {
                 for (int z = -4; z <= 4; ++z) {
                     targetPos.setPos(pos.getX() + x, pos.getY() + y, pos.getZ() + z);
                     IBlockState targetState = world.getBlockState(targetPos);
-                    if (targetState.getBlock().isLeaves(targetState, world, targetPos)) {
+                    if (isLeaves(targetState, world, targetPos)) {
 //                        world.destroyBlock(targetPos, false);
                         spawnFalling(world, targetPos, targetState, false);
-                    }
-                }
-            }
-        }
-        for (int y = -2; y <= 2; ++y) {
-            for (int x = -2; x <= 2; ++x) {
-                for (int z = -2; z <= 2; ++z) {
-                    targetPos.setPos(pos.getX() + x, pos.getY() + y, pos.getZ() + z);
-                    IBlockState targetState = world.getBlockState(targetPos);
-                    if (!tree.logSets.containsValue(targetPos) && targetState.getBlock().isWood(world, targetPos))
+                    } else if (!tree.logSets.containsValue(targetPos) && isWood(targetState, world, targetPos))
                         spawnFalling(world, targetPos, targetState, true);
                 }
             }
         }
+    }
+
+    private boolean isWood(IBlockState state, World world, BlockPos pos) {
+        return state.getBlock().isWood(world, pos);
+    }
+
+    private boolean isLeaves(IBlockState state, World world, BlockPos pos) {
+        return state.getBlock().isLeaves(state, world, pos);
+    }
+
+    private boolean isDirt(IBlockState state, World world, BlockPos pos) {
+        return state.getBlock().canSustainPlant(state, world, pos, EnumFacing.UP, (BlockSapling) Blocks.SAPLING);
     }
 
     private void spawnFalling(World world, BlockPos pos, IBlockState state, boolean log) {
@@ -144,7 +147,7 @@ public class TimberjackEventHandler {
         targetPos.setPos(last.down());
         if (!logs.contains(targetPos)) {
             IBlockState targetState = world.getBlockState(targetPos);
-            if (targetState.getBlock().canSustainPlant(targetState, world, targetPos, EnumFacing.UP, (BlockSapling) Blocks.SAPLING)) {
+            if (isDirt(targetState, world, targetPos)) {
                 return false;
             }
         }
@@ -155,12 +158,12 @@ public class TimberjackEventHandler {
                     if (logs.contains(targetPos))
                         continue;
                     IBlockState targetState = world.getBlockState(targetPos);
-                    if (targetState.getBlock().isWood(world, targetPos)) {
+                    if (isWood(targetState, world, targetPos)) {
                         BlockPos immutable = targetPos.toImmutable();
                         logs.add(immutable);
                         if (!expandLogsAndCanFell(world, tree, logs, immutable))
                             return false;
-                    } else if (!tree.foundLeaves && targetState.getBlock().isLeaves(targetState, world, targetPos))
+                    } else if (!tree.foundLeaves && isLeaves(targetState, world, targetPos))
                         tree.foundLeaves = true;
                 }
             }
