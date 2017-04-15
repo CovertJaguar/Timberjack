@@ -52,12 +52,17 @@ class TimberjackUtils {
         return biome.topBlock != null && biome.topBlock.getBlock() == state.getBlock();
     }
 
-    static void spawnFalling(World world, BlockPos pos, IBlockState state, boolean log) {
-        EntityFallingBlock entity = new EntityFallingBlock(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, state);
-        entity.motionX = (world.rand.nextFloat() - 0.5F) * 0.8F;
-        entity.motionZ = (world.rand.nextFloat() - 0.5F) * 0.8F;
-        entity.shouldDropItem = log;
-        entity.setHurtEntities(log);
-        world.spawnEntityInWorld(entity);
+    static void spawnFalling(World world, BlockPos.MutableBlockPos pos, IBlockState state, boolean log) {
+        pos.move(EnumFacing.DOWN);
+        boolean isAirBelow = world.isAirBlock(pos);
+        pos.move(EnumFacing.UP);
+        if (isAirBelow) {
+            EntityFallingBlock entity = new EntityFallingBlock(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, state);
+            entity.motionX = (world.rand.nextFloat() - 0.5F) * 0.8F;
+            entity.motionZ = (world.rand.nextFloat() - 0.5F) * 0.8F;
+            entity.shouldDropItem = log;
+            entity.setHurtEntities(log);
+            world.spawnEntityInWorld(entity);
+        }
     }
 }

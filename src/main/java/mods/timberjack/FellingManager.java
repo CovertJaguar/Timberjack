@@ -56,21 +56,23 @@ class FellingManager {
     }
 
     private class Tree {
-        private Map<BlockPos, Branch> branches = new HashMap<>();
+        private Collection<Branch> branches = new LinkedList<>();
         private Set<BlockPos> logsToFell = new ConcurrentSkipListSet<>();
         private final BlockPos choppedBlock;
 
         Tree(BlockPos choppedBlock) {
             this.choppedBlock = choppedBlock;
-            getBranch(choppedBlock);
+            makeBranch(choppedBlock);
         }
 
         boolean contains(BlockPos pos) {
-            return branches.values().stream().anyMatch(b -> b.logs.contains(pos));
+            return branches.stream().anyMatch(b -> b.logs.contains(pos));
         }
 
-        Branch getBranch(BlockPos pos) {
-            return branches.computeIfAbsent(pos, Branch::new);
+        Branch makeBranch(BlockPos pos) {
+            Branch branch = new Branch(pos);
+            branches.add(branch);
+            return branch;
         }
 
         private void buildTree() {
@@ -85,7 +87,7 @@ class FellingManager {
         }
 
         private void addBranch(BlockPos pos) {
-            Branch branch = getBranch(pos);
+            Branch branch = makeBranch(pos);
             branch.logs.add(choppedBlock);
             branch.expandLogs(pos);
             if (branch.hasLeaves && !branch.touchesGround)
@@ -99,7 +101,7 @@ class FellingManager {
         }
 
         private void fellLog(BlockPos pos) {
-            spawnFalling(world, pos, world.getBlockState(pos), true);
+            spawnFalling(world, new BlockPos.MutableBlockPos(pos), world.getBlockState(pos), true);
             iterateBlocks(4, pos, targetPos -> {
                 IBlockState targetState = world.getBlockState(targetPos);
                 if (isLeaves(targetState, world, targetPos)) {
