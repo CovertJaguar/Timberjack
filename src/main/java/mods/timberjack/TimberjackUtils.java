@@ -49,7 +49,7 @@ class TimberjackUtils {
         if (state.getBlock().canSustainPlant(state, world, pos, EnumFacing.UP, (BlockSapling) Blocks.SAPLING))
             return true;
         Biome biome = world.getBiome(pos);
-        return biome.topBlock.getBlock() == state.getBlock();
+        return biome.topBlock != null && biome.topBlock.getBlock() == state.getBlock();
     }
 
     static void spawnFalling(World world, BlockPos pos, IBlockState state, boolean log) {
