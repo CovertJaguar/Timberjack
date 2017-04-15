@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) CovertJaguar, 2011-2017
+ *
+ * This work (Timberjack) is licensed under the "MIT" License,
+ * see LICENSE in root folder for details.
+ */
+
 package mods.timberjack;
 
 import net.minecraftforge.common.MinecraftForge;
