@@ -8,6 +8,7 @@
 package mods.timberjack;
 
 import net.minecraft.block.BlockSapling;
+import net.minecraft.block.IGrowable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityFallingBlock;
 import net.minecraft.init.Blocks;
@@ -54,14 +55,20 @@ class TimberjackUtils {
 
     static void spawnFalling(World world, BlockPos.MutableBlockPos pos, IBlockState state, boolean log) {
         pos.move(EnumFacing.DOWN);
-        boolean isAirBelow = world.isAirBlock(pos);
+
+        IBlockState belowState = world.getBlockState(pos);
+        boolean canFall = belowState.getBlock().isAir(belowState, world, pos)
+                || belowState.getBlock() instanceof IGrowable
+                || belowState.getBlock().isReplaceable(world, pos);
+
         pos.move(EnumFacing.UP);
-        if (isAirBelow) {
+        if (canFall) {
             EntityFallingBlock entity = new EntityFallingBlock(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, state);
             entity.motionX = (world.rand.nextFloat() - 0.5F) * 0.8F;
             entity.motionZ = (world.rand.nextFloat() - 0.5F) * 0.8F;
             entity.shouldDropItem = log;
             entity.setHurtEntities(log);
+            world.setBlockToAir(pos);
             world.spawnEntityInWorld(entity);
         }
     }
