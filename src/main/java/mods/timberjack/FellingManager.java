@@ -9,10 +9,11 @@ package mods.timberjack;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static mods.timberjack.TimberjackUtils.*;
 
@@ -22,7 +23,6 @@ import static mods.timberjack.TimberjackUtils.*;
  * @author CovertJaguar <http://www.railcraft.info>
  */
 class FellingManager {
-    private static final int MAX_LOGS = 1000;
     private Collection<Tree> fellQueue = new LinkedList<>();
     private final World world;
 
@@ -38,15 +38,18 @@ class FellingManager {
 //            long worldTime = event.world.getTotalWorldTime();
 //            if (worldTime % 4 != 0)
 //                return;
+//        if(!fellQueue.isEmpty())
+//            System.out.printf("Felling %d trees\n", fellQueue.size());
         fellQueue.forEach(tree -> {
+            tree.prepForFelling();
             Iterator<BlockPos> it = tree.logsToFell.iterator();
-            for (int ii = 0; ii < 1 && it.hasNext(); ii++) {
+            if (it.hasNext()) {
                 BlockPos log = it.next();
                 tree.fellLog(log);
                 it.remove();
             }
         });
-        fellQueue.removeIf(tree -> tree.logsToFell.isEmpty());
+        fellQueue.removeIf(tree -> !tree.hasLogsToFell());
     }
 
     void onChop(BlockPos pos) {
@@ -56,9 +59,12 @@ class FellingManager {
     }
 
     private class Tree {
-        private Collection<Branch> branches = new LinkedList<>();
-        private Set<BlockPos> logsToFell = new ConcurrentSkipListSet<>();
+        private Collection<Branch> branches = new ConcurrentLinkedQueue<>();
+        private Set<BlockPos> logs = new HashSet<>();
+        private List<BlockPos> logsToFell = new LinkedList<>();
+        private List<BlockPos> newLogsToFell = new LinkedList<>();
         private final BlockPos choppedBlock;
+        private Vec3d centroid = Vec3d.ZERO;
 
         Tree(BlockPos choppedBlock) {
             this.choppedBlock = choppedBlock;
@@ -66,11 +72,57 @@ class FellingManager {
         }
 
         boolean contains(BlockPos pos) {
-            return branches.stream().anyMatch(b -> b.logs.contains(pos));
+            return logs.contains(pos);
+        }
+
+        int size() {
+            return logs.size();
+        }
+
+        void addLogsToFell(Collection<BlockPos> logs) {
+            newLogsToFell.addAll(logs);
+        }
+
+        void prepForFelling() {
+            if (!newLogsToFell.isEmpty()) {
+                logsToFell.addAll(newLogsToFell);
+                updateCentroid();
+                logsToFell.sort((o1, o2) -> {
+                    int yCompare = Integer.compare(o1.getY(), o2.getY());
+                    if (yCompare != 0)
+                        return yCompare;
+                    int distCompare = Double.compare(centroid.squareDistanceTo(o2.getX(), o2.getY(), o2.getZ()),
+                            centroid.squareDistanceTo(o1.getX(), o1.getY(), o1.getZ()));
+                    if (distCompare != 0)
+                        return distCompare;
+                    return o1.compareTo(o2);
+                });
+                newLogsToFell.clear();
+            }
+        }
+
+        void updateCentroid() {
+            double x = 0;
+            double y = 0;
+            double z = 0;
+            for (BlockPos pos : logs) {
+                x += pos.getX();
+                y += pos.getY();
+                z += pos.getZ();
+            }
+            int size = logs.size();
+            x /= size;
+            y /= size;
+            z /= size;
+            centroid = new Vec3d(x, y, z);
+        }
+
+        boolean hasLogsToFell() {
+            return !logsToFell.isEmpty() || !newLogsToFell.isEmpty();
         }
 
         Branch makeBranch(BlockPos pos) {
-            Branch branch = new Branch(pos);
+            Branch branch = new Branch(this, pos);
             branches.add(branch);
             return branch;
         }
@@ -80,34 +132,30 @@ class FellingManager {
                 if (!contains(targetPos)) {
                     IBlockState targetState = world.getBlockState(targetPos);
                     if (isWood(targetState, world, targetPos)) {
-                        addBranch(targetPos.toImmutable());
+                        scanNewBranch(targetPos.toImmutable());
                     }
                 }
             });
         }
 
-        private void addBranch(BlockPos pos) {
+        private void scanNewBranch(BlockPos pos) {
             Branch branch = makeBranch(pos);
-            branch.logs.add(choppedBlock);
-            branch.expandLogs(pos);
-            if (branch.hasLeaves && !branch.touchesGround)
-                logsToFell.addAll(branch.logs);
-
+            branch.scan();
         }
 
         private void queueForFelling() {
-            if (!logsToFell.isEmpty())
+            if (hasLogsToFell())
                 fellQueue.add(this);
         }
 
-        private void fellLog(BlockPos pos) {
-            spawnFalling(world, new BlockPos.MutableBlockPos(pos), world.getBlockState(pos), true);
-            iterateBlocks(4, pos, targetPos -> {
+        private void fellLog(BlockPos logPos) {
+            spawnFallingLog(world, logPos, centroid);
+            iterateBlocks(4, logPos, targetPos -> {
                 IBlockState targetState = world.getBlockState(targetPos);
                 if (isLeaves(targetState, world, targetPos)) {
-                    spawnFalling(world, targetPos, targetState, false);
-                } else if (!contains(targetPos) && isWood(targetState, world, targetPos)) {
-                    addBranch(targetPos.toImmutable());
+                    spawnFallingLeaves(world, targetPos, logPos, centroid, targetState);
+                } else if (isWood(targetState, world, targetPos) && !contains(targetPos)) {
+                    scanNewBranch(targetPos.toImmutable());
                 }
             });
         }
@@ -115,19 +163,34 @@ class FellingManager {
 
     private class Branch {
         private Set<BlockPos> logs = new HashSet<>();
+        private final Tree tree;
+        private final BlockPos start;
         private boolean hasLeaves;
         private boolean touchesGround;
 
-        Branch(BlockPos start) {
-            logs.add(start);
+        Branch(Tree tree, BlockPos start) {
+            this.tree = tree;
+            this.start = start;
+            addLog(start);
+        }
+
+        private void scan() {
+            expandLogs(start);
+            if (hasLeaves && !touchesGround)
+                tree.addLogsToFell(logs);
+        }
+
+        private void addLog(BlockPos pos) {
+            logs.add(pos);
+            tree.logs.add(pos);
         }
 
         private void expandLogs(BlockPos last) {
-            if (logs.size() > MAX_LOGS)
+            if (tree.size() > TimberjackConfig.getMaxLogsProcessed())
                 return;
             if (!touchesGround) {
                 BlockPos down = last.down();
-                if (!logs.contains(down)) {
+                if (!tree.contains(down)) {
                     IBlockState targetState = world.getBlockState(down);
                     if (isDirt(targetState, world, down)) {
                         touchesGround = true;
@@ -136,11 +199,11 @@ class FellingManager {
             }
 
             iterateBlocks(1, last, targetPos -> {
-                if (!logs.contains(targetPos)) {
+                if (!tree.contains(targetPos)) {
                     IBlockState targetState = world.getBlockState(targetPos);
                     if (isWood(targetState, world, targetPos)) {
                         BlockPos immutable = targetPos.toImmutable();
-                        logs.add(immutable);
+                        addLog(immutable);
                         expandLogs(immutable);
                     } else if (!hasLeaves && isLeaves(targetState, world, targetPos))
                         hasLeaves = true;

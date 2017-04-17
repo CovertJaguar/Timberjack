@@ -11,11 +11,19 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 @Mod(modid = Timberjack.MOD_ID, version = Timberjack.VERSION)
 public class Timberjack {
-    public static final String MOD_ID = "timberjack";
-    public static final String VERSION = "1.0";
+    static final String MOD_ID = "timberjack";
+    static final String VERSION = "1.0";
+//    @Mod.Instance(MOD_ID)
+//    public static Timberjack instance;
+
+    @EventHandler
+    public void preInit(FMLPreInitializationEvent event) {
+        TimberjackConfig.load(event.getModConfigurationDirectory());
+    }
 
     @EventHandler
     public void init(FMLInitializationEvent event) {

@@ -14,6 +14,7 @@ import net.minecraft.entity.item.EntityFallingBlock;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 
@@ -53,23 +54,32 @@ class TimberjackUtils {
         return biome.topBlock != null && biome.topBlock.getBlock() == state.getBlock();
     }
 
-    static void spawnFalling(World world, BlockPos.MutableBlockPos pos, IBlockState state, boolean log) {
-        pos.move(EnumFacing.DOWN);
+    static void spawnFallingLog(World world, BlockPos logPos, Vec3d centroid) {
+        spawnFalling(world, logPos, centroid, world.getBlockState(logPos), true);
+    }
 
+    static void spawnFallingLeaves(World world, BlockPos.MutableBlockPos pos, BlockPos logPos, Vec3d centroid, IBlockState state) {
+        pos.move(EnumFacing.DOWN);
         IBlockState belowState = world.getBlockState(pos);
         boolean canFall = belowState.getBlock().isAir(belowState, world, pos)
                 || belowState.getBlock() instanceof IGrowable
-                || belowState.getBlock().isReplaceable(world, pos);
-
+                || belowState.getMaterial().isReplaceable()
+                || logPos.equals(pos);
         pos.move(EnumFacing.UP);
-        if (canFall) {
-            EntityFallingBlock entity = new EntityFallingBlock(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, state);
-            entity.motionX = (world.rand.nextFloat() - 0.5F) * 0.8F;
-            entity.motionZ = (world.rand.nextFloat() - 0.5F) * 0.8F;
-            entity.shouldDropItem = log;
-            entity.setHurtEntities(log);
-            world.setBlockToAir(pos);
-            world.spawnEntityInWorld(entity);
-        }
+
+        if (canFall)
+            spawnFalling(world, pos, centroid, state, false);
+    }
+
+    private static void spawnFalling(World world, BlockPos pos, Vec3d centroid, IBlockState state, boolean log) {
+        EntityFallingBlock entity = new EntityFallingBlock(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, state);
+        Vec3d vector = new Vec3d(pos);
+        vector = vector.subtract(centroid);
+        vector = vector.normalize();
+        entity.motionX = vector.xCoord * 0.4 + (world.rand.nextFloat() - 0.5) * 0.4;
+        entity.motionZ = vector.zCoord * 0.4 + (world.rand.nextFloat() - 0.5) * 0.4;
+        entity.shouldDropItem = log;
+        entity.setHurtEntities(log);
+        world.spawnEntityInWorld(entity);
     }
 }
