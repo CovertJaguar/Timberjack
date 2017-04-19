@@ -8,12 +8,14 @@
 package mods.timberjack;
 
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import static mods.timberjack.TimberjackUtils.*;
 
@@ -166,49 +168,60 @@ class FellingManager {
         private final Tree tree;
         private final BlockPos start;
         private boolean hasLeaves;
-        private boolean touchesGround;
+        private boolean rooted;
 
         Branch(Tree tree, BlockPos start) {
             this.tree = tree;
             this.start = start;
-            addLog(start);
+            addLog(new BlockPos.MutableBlockPos(start));
         }
 
         private void scan() {
             expandLogs(start);
-            if (hasLeaves && !touchesGround)
+            if (hasLeaves && !rooted)
                 tree.addLogsToFell(logs);
         }
 
-        private void addLog(BlockPos pos) {
-            logs.add(pos);
-            tree.logs.add(pos);
-        }
-
-        private void expandLogs(BlockPos last) {
-            if (tree.size() > TimberjackConfig.getMaxLogsProcessed())
-                return;
-            if (!touchesGround) {
-                BlockPos down = last.down();
-                if (!tree.contains(down)) {
-                    IBlockState targetState = world.getBlockState(down);
-                    if (isDirt(targetState, world, down)) {
-                        touchesGround = true;
+        private BlockPos addLog(BlockPos.MutableBlockPos targetPos) {
+            BlockPos immutable = targetPos.toImmutable();
+            logs.add(immutable);
+            tree.logs.add(immutable);
+            if (!rooted) {
+                targetPos.move(EnumFacing.DOWN);
+                if (!tree.contains(targetPos)) {
+                    IBlockState targetState = world.getBlockState(targetPos);
+                    if (isDirt(targetState, world, targetPos)) {
+                        rooted = true;
                     }
                 }
             }
+            return immutable;
+        }
 
-            iterateBlocks(1, last, targetPos -> {
-                if (!tree.contains(targetPos)) {
-                    IBlockState targetState = world.getBlockState(targetPos);
-                    if (isWood(targetState, world, targetPos)) {
-                        BlockPos immutable = targetPos.toImmutable();
-                        addLog(immutable);
-                        expandLogs(immutable);
-                    } else if (!hasLeaves && isLeaves(targetState, world, targetPos))
-                        hasLeaves = true;
+        private void expandLogs(BlockPos root) {
+            if (tree.size() >= TimberjackConfig.getMaxLogsProcessed())
+                return;
+
+            Collection<BlockPos> logsToExpand = new ConcurrentSkipListSet<>();
+            logsToExpand.add(root);
+            while (!logsToExpand.isEmpty()) {
+                Iterator<BlockPos> it = logsToExpand.iterator();
+                while (it.hasNext()) {
+                    BlockPos log = it.next();
+                    iterateBlocks(1, log, targetPos -> {
+                        if (!tree.contains(targetPos)) {
+                            IBlockState targetState = world.getBlockState(targetPos);
+                            if (isWood(targetState, world, targetPos)) {
+                                if (tree.size() < TimberjackConfig.getMaxLogsProcessed()) {
+                                    logsToExpand.add(addLog(targetPos));
+                                }
+                            } else if (!hasLeaves && isLeaves(targetState, world, targetPos))
+                                hasLeaves = true;
+                        }
+                    });
+                    it.remove();
                 }
-            });
+            }
         }
     }
 
