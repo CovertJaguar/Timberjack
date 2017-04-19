@@ -7,6 +7,7 @@
 
 package mods.timberjack;
 
+import com.google.common.collect.MapMaker;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -24,16 +25,29 @@ import static mods.timberjack.TimberjackUtils.*;
  *
  * @author CovertJaguar <http://www.railcraft.info>
  */
-class FellingManager {
-    private Collection<Tree> fellQueue = new LinkedList<>();
+public class FellingManager {
+    public static final Map<World, FellingManager> fellingManagers = new MapMaker().weakKeys().makeMap();
+    private final Collection<Tree> fellQueue = new LinkedList<>();
     private final World world;
 
     FellingManager(World world) {
         this.world = world;
     }
 
-    boolean isEmpty() {
+    public boolean isEmpty() {
         return fellQueue.isEmpty();
+    }
+
+    public int treesQueuedToFell() {
+        return fellQueue.size();
+    }
+
+    public int logsQueuedToFell() {
+        int logs = 0;
+        for (FellingManager.Tree tree : fellQueue) {
+            logs += tree.logsQueuedToFell();
+        }
+        return logs;
     }
 
     void tick() {
@@ -79,6 +93,10 @@ class FellingManager {
 
         int size() {
             return logs.size();
+        }
+
+        int logsQueuedToFell() {
+            return logsToFell.size() + newLogsToFell.size();
         }
 
         void addLogsToFell(Collection<BlockPos> logs) {

@@ -7,14 +7,11 @@
 
 package mods.timberjack;
 
-import com.google.common.collect.MapMaker;
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
-
-import java.util.Map;
 
 import static mods.timberjack.TimberjackUtils.isWood;
 
@@ -25,16 +22,14 @@ import static mods.timberjack.TimberjackUtils.isWood;
  */
 public class TimberjackEventHandler {
 
-    private static Map<World, FellingManager> fellingManagers = new MapMaker().weakKeys().makeMap();
-
     @SubscribeEvent
     public void tick(TickEvent.WorldTickEvent event) {
         if (event.side == Side.SERVER && event.phase == TickEvent.Phase.START) {
-            FellingManager fellingManager = fellingManagers.get(event.world);
+            FellingManager fellingManager = FellingManager.fellingManagers.get(event.world);
             if (fellingManager != null) {
                 fellingManager.tick();
                 if (fellingManager.isEmpty())
-                    fellingManagers.remove(event.world);
+                    FellingManager.fellingManagers.remove(event.world);
             }
         }
     }
@@ -55,7 +50,7 @@ public class TimberjackEventHandler {
     public void chopEvent(BlockEvent.BreakEvent event) {
         World world = event.getWorld();
         if (isWood(event.getState(), world, event.getPos())) {
-            fellingManagers.computeIfAbsent(world, FellingManager::new).onChop(event.getPos());
+            FellingManager.fellingManagers.computeIfAbsent(world, FellingManager::new).onChop(event.getPos());
         }
     }
 }
