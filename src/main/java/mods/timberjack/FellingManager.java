@@ -196,7 +196,7 @@ public class FellingManager {
 
         private void scan() {
             expandLogs(start);
-            if (hasLeaves && !rooted)
+            if (hasLeaves && !rooted && (tree.size() < TimberjackConfig.getMaxLogsProcessed() || TimberjackConfig.canFellLargeTrees()))
                 tree.addLogsToFell(logs);
         }
 

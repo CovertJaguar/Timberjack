@@ -18,9 +18,14 @@ import java.io.File;
  */
 public class TimberjackConfig {
     private static int maxLogsProcessed = 2000;
+    private static boolean canFellLargeTrees;
 
     public static int getMaxLogsProcessed() {
         return maxLogsProcessed;
+    }
+
+    public static boolean canFellLargeTrees() {
+        return canFellLargeTrees;
     }
 
     public static void load(File configDir) {
@@ -28,6 +33,7 @@ public class TimberjackConfig {
         config.load();
 
         maxLogsProcessed = config.get(Configuration.CATEGORY_GENERAL, "maxLogsProcessed", maxLogsProcessed).getInt(maxLogsProcessed);
+        canFellLargeTrees = config.get(Configuration.CATEGORY_GENERAL, "canFellLargeTrees", canFellLargeTrees).getBoolean(canFellLargeTrees);
 
         if (config.hasChanged())
             config.save();
