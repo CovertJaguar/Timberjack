@@ -24,7 +24,12 @@ import java.util.stream.Collectors;
 public class TimberjackConfig {
     private static int maxLogsProcessed = 2000;
     private static boolean canFellLargeTrees;
-    private static String[] logBlacklistArray = {"natura:redwood_logs"};
+    private static String[] logBlacklistArray = {
+            "natura:redwood_logs",
+            "biomesoplenty:log_0#4",
+            "forestry:logs.6#0",
+            "forestry:logs.fireproof.6#0",
+    };
     private static Set<String> logBlacklist = Collections.emptySet();
 
     public static int getMaxLogsProcessed() {
