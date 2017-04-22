@@ -40,7 +40,7 @@ class TimberjackUtils {
     }
 
     static boolean isWood(IBlockState state, World world, BlockPos pos) {
-        return state.getBlock().isWood(world, pos);
+        return state.getBlock().isWood(world, pos) && TimberjackConfig.canFellLog(state);
     }
 
     static boolean isLeaves(IBlockState state, World world, BlockPos pos) {
