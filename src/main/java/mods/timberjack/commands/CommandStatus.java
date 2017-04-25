@@ -27,11 +27,11 @@ public class CommandStatus extends SubCommand {
         World world = CommandHelpers.getWorld(sender);
         FellingManager fellingManager = FellingManager.fellingManagers.get(world);
         if (fellingManager == null) {
-            sender.addChatMessage(new TextComponentString("No Felling Manager active, this is normal."));
+            sender.sendMessage(new TextComponentString("No Felling Manager active, this is normal."));
         } else {
-            sender.addChatMessage(new TextComponentString("Felling Manager active:"));
-            sender.addChatMessage(new TextComponentString(String.format("- Trees queued: %d", fellingManager.treesQueuedToFell())));
-            sender.addChatMessage(new TextComponentString(String.format("- Logs queued: %d", fellingManager.logsQueuedToFell())));
+            sender.sendMessage(new TextComponentString("Felling Manager active:"));
+            sender.sendMessage(new TextComponentString(String.format("- Trees queued: %d", fellingManager.treesQueuedToFell())));
+            sender.sendMessage(new TextComponentString(String.format("- Logs queued: %d", fellingManager.logsQueuedToFell())));
         }
     }
 

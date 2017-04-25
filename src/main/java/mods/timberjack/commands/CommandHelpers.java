@@ -53,13 +53,13 @@ public class CommandHelpers {
     }
 
     public static void sendLocalizedChatMessage(ICommandSender sender, String locTag, Object... args) {
-        sender.addChatMessage(new TextComponentTranslation(locTag, args));
+        sender.sendMessage(new TextComponentTranslation(locTag, args));
     }
 
     public static void sendLocalizedChatMessage(ICommandSender sender, Style chatStyle, String locTag, Object... args) {
         TextComponentTranslation chat = new TextComponentTranslation(locTag, args);
         chat.setStyle(chatStyle);
-        sender.addChatMessage(chat);
+        sender.sendMessage(chat);
     }
 
     /**
@@ -70,15 +70,15 @@ public class CommandHelpers {
      * Messages will not be localized properly if you use StringUtil.localize().
      */
     public static void sendChatMessage(ICommandSender sender, String message) {
-        sender.addChatMessage(new TextComponentString(message));
+        sender.sendMessage(new TextComponentString(message));
     }
 
     public static void throwWrongUsage(ICommandSender sender, IModCommand command) throws WrongUsageException {
-        throw new WrongUsageException((I18n.translateToLocalFormatted(LOC_PREFIX + "help", command.getCommandUsage(sender))));
+        throw new WrongUsageException((I18n.translateToLocalFormatted(LOC_PREFIX + "help", command.getUsage(sender))));
     }
 
     public static void executeChildCommand(MinecraftServer server, ICommandSender sender, SubCommand child, String[] args) throws CommandException {
-        if (!sender.canCommandSenderUseCommand(child.getRequiredPermissionLevel(), child.getFullCommandString()))
+        if (!sender.canUseCommand(child.getRequiredPermissionLevel(), child.getFullCommandString()))
             throw new WrongUsageException(I18n.translateToLocal(LOC_PREFIX + "noperms"));
         String[] newArgs = new String[args.length - 1];
         System.arraycopy(args, 1, newArgs, 0, newArgs.length);
@@ -91,13 +91,13 @@ public class CommandHelpers {
         sendLocalizedChatMessage(sender, header, LOC_PREFIX + "" + command.getFullCommandString().replace(" ", ".") + ".format", command.getFullCommandString());
         Style body = new Style();
         body.setColor(TextFormatting.GRAY);
-        sendLocalizedChatMessage(sender, body, LOC_PREFIX + "aliases", command.getCommandAliases().toString().replace("[", "").replace("]", ""));
+        sendLocalizedChatMessage(sender, body, LOC_PREFIX + "aliases", command.getAliases().toString().replace("[", "").replace("]", ""));
         sendLocalizedChatMessage(sender, body, LOC_PREFIX + "permlevel", command.getRequiredPermissionLevel());
         sendLocalizedChatMessage(sender, body, LOC_PREFIX + command.getFullCommandString().replace(" ", ".") + ".help");
         if (!command.getChildren().isEmpty()) {
             sendLocalizedChatMessage(sender, LOC_PREFIX + "list");
             for (SubCommand child : command.getChildren()) {
-                sendLocalizedChatMessage(sender, LOC_PREFIX + child.getFullCommandString().replace(" ", ".") + ".desc", child.getCommandName());
+                sendLocalizedChatMessage(sender, LOC_PREFIX + child.getFullCommandString().replace(" ", ".") + ".desc", child.getName());
             }
         }
     }
@@ -120,10 +120,10 @@ public class CommandHelpers {
     }
 
     public static boolean matches(String commandName, IModCommand command) {
-        if (Objects.equals(commandName, command.getCommandName()))
+        if (Objects.equals(commandName, command.getName()))
             return true;
-        else if (command.getCommandAliases() != null)
-            return command.getCommandAliases().stream().anyMatch(alias -> Objects.equals(commandName, alias));
+        else if (command.getAliases() != null)
+            return command.getAliases().stream().anyMatch(alias -> Objects.equals(commandName, alias));
         return false;
     }
 

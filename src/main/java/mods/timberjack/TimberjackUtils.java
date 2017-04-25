@@ -80,6 +80,6 @@ class TimberjackUtils {
         entity.motionZ = vector.zCoord * 0.4 + (world.rand.nextFloat() - 0.5) * 0.4;
         entity.shouldDropItem = log;
         entity.setHurtEntities(log);
-        world.spawnEntityInWorld(entity);
+        world.spawnEntity(entity);
     }
 }
