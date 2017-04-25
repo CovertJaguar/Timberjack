@@ -20,7 +20,7 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 @Mod(modid = Timberjack.MOD_ID, version = Timberjack.VERSION)
 public class Timberjack {
     static final String MOD_ID = "timberjack";
-    static final String VERSION = "1.0";
+    static final String VERSION = "@VERSION@";
 //    @Mod.Instance(MOD_ID)
 //    public static Timberjack instance;
 
