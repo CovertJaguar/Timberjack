@@ -56,6 +56,7 @@ public class FellingManager {
 //                return;
 //        if(!fellQueue.isEmpty())
 //            System.out.printf("Felling %d trees\n", fellQueue.size());
+        fellQueue.removeIf(tree -> !tree.hasLogsToFell());
         fellQueue.forEach(tree -> {
             tree.prepForFelling();
             Iterator<BlockPos> it = tree.logsToFell.iterator();
@@ -65,7 +66,6 @@ public class FellingManager {
                 it.remove();
             }
         });
-        fellQueue.removeIf(tree -> !tree.hasLogsToFell());
     }
 
     void onChop(BlockPos pos) {
@@ -81,6 +81,7 @@ public class FellingManager {
         private List<BlockPos> newLogsToFell = new LinkedList<>();
         private final BlockPos choppedBlock;
         private Vec3d centroid = Vec3d.ZERO;
+        private boolean isTreehouse;
 
         Tree(BlockPos choppedBlock) {
             this.choppedBlock = choppedBlock;
@@ -138,7 +139,7 @@ public class FellingManager {
         }
 
         boolean hasLogsToFell() {
-            return !logsToFell.isEmpty() || !newLogsToFell.isEmpty();
+            return !isTreehouse && (!logsToFell.isEmpty() || !newLogsToFell.isEmpty());
         }
 
         Branch makeBranch(BlockPos pos) {
@@ -222,9 +223,9 @@ public class FellingManager {
 
             Collection<BlockPos> logsToExpand = new ConcurrentSkipListSet<>();
             logsToExpand.add(root);
-            while (!logsToExpand.isEmpty()) {
+            while (!logsToExpand.isEmpty() && !tree.isTreehouse) {
                 Iterator<BlockPos> it = logsToExpand.iterator();
-                while (it.hasNext()) {
+                while (it.hasNext() && !tree.isTreehouse) {
                     BlockPos log = it.next();
                     iterateBlocks(1, log, targetPos -> {
                         if (!tree.contains(targetPos)) {
@@ -233,8 +234,11 @@ public class FellingManager {
                                 if (tree.size() < TimberjackConfig.getMaxLogsProcessed()) {
                                     logsToExpand.add(addLog(targetPos));
                                 }
-                            } else if (!hasLeaves && isLeaves(targetState, world, targetPos))
+                            } else if (!hasLeaves && isLeaves(targetState, world, targetPos)) {
                                 hasLeaves = true;
+                            } else if (isTreehouse(targetState, world, targetPos)) {
+                                tree.isTreehouse = true;
+                            }
                         }
                     });
                     it.remove();

@@ -7,8 +7,8 @@
 
 package mods.timberjack;
 
-import net.minecraft.block.BlockSapling;
-import net.minecraft.block.IGrowable;
+import net.minecraft.block.*;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityFallingBlock;
 import net.minecraft.init.Blocks;
@@ -18,6 +18,8 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -26,6 +28,26 @@ import java.util.function.Consumer;
  * @author CovertJaguar <http://www.railcraft.info>
  */
 class TimberjackUtils {
+
+    private static Set<Class<? extends Block>> houseBlocks = new HashSet<>();
+    private static Set<Material> houseMaterials = new HashSet<>();
+
+    static {
+        houseBlocks.add(BlockDoor.class);
+        houseBlocks.add(BlockBed.class);
+        houseBlocks.add(BlockWorkbench.class);
+        houseBlocks.add(BlockSign.class);
+        houseBlocks.add(BlockFurnace.class);
+        houseBlocks.add(BlockTrapDoor.class);
+        houseBlocks.add(BlockGlass.class);
+        houseBlocks.add(BlockStainedGlass.class);
+        houseBlocks.add(BlockPane.class);
+
+        houseMaterials.add(Material.GLASS);
+        houseMaterials.add(Material.ANVIL);
+        houseMaterials.add(Material.CIRCUITS);
+        houseMaterials.add(Material.CARPET);
+    }
 
     static void iterateBlocks(int range, BlockPos center, Consumer<BlockPos.MutableBlockPos> action) {
         BlockPos.MutableBlockPos targetPos = new BlockPos.MutableBlockPos();
@@ -52,6 +74,20 @@ class TimberjackUtils {
             return true;
         Biome biome = world.getBiome(pos);
         return biome.topBlock != null && biome.topBlock.getBlock() == state.getBlock();
+    }
+
+    static boolean isTreehouse(IBlockState state, World world, BlockPos pos) {
+        if (!TimberjackConfig.aggressiveHouseProtection())
+            return false;
+        if (houseMaterials.contains(state.getMaterial()))
+            return true;
+        Class blockClass = state.getBlock().getClass();
+        while (blockClass != Block.class) {
+            if (houseBlocks.contains(blockClass))
+                return true;
+            blockClass = blockClass.getSuperclass();
+        }
+        return false;
     }
 
     static void spawnFallingLog(World world, BlockPos logPos, Vec3d centroid) {

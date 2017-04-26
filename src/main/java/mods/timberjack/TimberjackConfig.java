@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 public class TimberjackConfig {
     private static int maxLogsProcessed = 2000;
     private static boolean canFellLargeTrees;
+    private static boolean aggressiveHouseProtection = true;
     private static String[] logBlacklistArray = {
             "natura:redwood_logs",
             "biomesoplenty:log_0#4",
@@ -40,6 +41,10 @@ public class TimberjackConfig {
         return canFellLargeTrees;
     }
 
+    public static boolean aggressiveHouseProtection() {
+        return aggressiveHouseProtection;
+    }
+
     public static boolean canFellLog(IBlockState state) {
         String name = state.getBlock().getRegistryName().toString();
         if (logBlacklist.contains(name))
@@ -54,6 +59,7 @@ public class TimberjackConfig {
 
         maxLogsProcessed = config.getInt("maxLogsProcessed", Configuration.CATEGORY_GENERAL, maxLogsProcessed, 0, 10_0000, "How many logs the tree scanning algorithm should look at before giving up");
         canFellLargeTrees = config.getBoolean("canFellLargeTrees", Configuration.CATEGORY_GENERAL, canFellLargeTrees, "What should happen when maxLogsProcessed is hit?");
+        aggressiveHouseProtection = config.getBoolean("aggressiveHouseProtection", Configuration.CATEGORY_GENERAL, aggressiveHouseProtection, "If doors, glass, bed, workbench, signs, furnaces, carpets, etc are detected near the tree it will terminate the felling, protecting the house");
         logBlacklistArray = config.getStringList("logBlacklist", Configuration.CATEGORY_GENERAL, logBlacklistArray, "Log types that should never be felled. Format: <resourceId/modId>:<blockName>[#<meta>]");
 
         logBlacklist = Arrays.stream(logBlacklistArray).collect(Collectors.toSet());
