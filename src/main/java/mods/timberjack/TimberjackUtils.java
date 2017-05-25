@@ -76,7 +76,7 @@ class TimberjackUtils {
         return biome.topBlock != null && biome.topBlock.getBlock() == state.getBlock();
     }
 
-    static boolean isTreehouse(IBlockState state, World world, BlockPos pos) {
+    static boolean isHouse(IBlockState state, World world, BlockPos pos) {
         if (!TimberjackConfig.aggressiveHouseProtection())
             return false;
         if (houseMaterials.contains(state.getMaterial()))

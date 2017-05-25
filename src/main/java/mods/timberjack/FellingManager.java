@@ -16,7 +16,6 @@ import net.minecraft.world.World;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 import static mods.timberjack.TimberjackUtils.*;
 
@@ -221,28 +220,24 @@ public class FellingManager {
             if (tree.size() >= TimberjackConfig.getMaxLogsProcessed())
                 return;
 
-            Collection<BlockPos> logsToExpand = new ConcurrentSkipListSet<>();
+            Deque<BlockPos> logsToExpand = new ArrayDeque<>();
             logsToExpand.add(root);
-            while (!logsToExpand.isEmpty() && !tree.isTreehouse) {
-                Iterator<BlockPos> it = logsToExpand.iterator();
-                while (it.hasNext() && !tree.isTreehouse) {
-                    BlockPos log = it.next();
-                    iterateBlocks(1, log, targetPos -> {
-                        if (!tree.contains(targetPos)) {
-                            IBlockState targetState = world.getBlockState(targetPos);
-                            if (isWood(targetState, world, targetPos)) {
-                                if (tree.size() < TimberjackConfig.getMaxLogsProcessed()) {
-                                    logsToExpand.add(addLog(targetPos));
-                                }
-                            } else if (!hasLeaves && isLeaves(targetState, world, targetPos)) {
-                                hasLeaves = true;
-                            } else if (isTreehouse(targetState, world, targetPos)) {
-                                tree.isTreehouse = true;
+            BlockPos nextBlock;
+            while ((nextBlock = logsToExpand.poll()) != null && !tree.isTreehouse) {
+                iterateBlocks(1, nextBlock, targetPos -> {
+                    if (!tree.contains(targetPos)) {
+                        IBlockState targetState = world.getBlockState(targetPos);
+                        if (isWood(targetState, world, targetPos)) {
+                            if (tree.size() < TimberjackConfig.getMaxLogsProcessed()) {
+                                logsToExpand.addLast(addLog(targetPos));
                             }
+                        } else if (!hasLeaves && isLeaves(targetState, world, targetPos)) {
+                            hasLeaves = true;
+                        } else if (isHouse(targetState, world, targetPos)) {
+                            tree.isTreehouse = true;
                         }
-                    });
-                    it.remove();
-                }
+                    }
+                });
             }
         }
     }
