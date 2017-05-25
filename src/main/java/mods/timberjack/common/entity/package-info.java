@@ -7,7 +7,7 @@
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
-package mods.timberjack;
+package mods.timberjack.common.entity;
 
 import mcp.MethodsReturnNonnullByDefault;
 

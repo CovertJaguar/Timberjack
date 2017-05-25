@@ -4,9 +4,9 @@
  * This work (Timberjack) is licensed under the "MIT" License,
  * see LICENSE in root folder for details.
  */
-package mods.timberjack.commands;
+package mods.timberjack.common.commands;
 
-import mods.timberjack.FellingManager;
+import mods.timberjack.common.felling.FellingManager;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextComponentString;

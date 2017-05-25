@@ -5,8 +5,9 @@
  * see LICENSE in root folder for details.
  */
 
-package mods.timberjack;
+package mods.timberjack.common.felling;
 
+import mods.timberjack.common.TimberjackConfig;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;

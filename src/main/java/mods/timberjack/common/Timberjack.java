@@ -5,10 +5,11 @@
  * see LICENSE in root folder for details.
  */
 
-package mods.timberjack;
+package mods.timberjack.common;
 
-import mods.timberjack.commands.CommandStatus;
-import mods.timberjack.commands.RootCommand;
+import mods.timberjack.common.commands.CommandStatus;
+import mods.timberjack.common.commands.RootCommand;
+import mods.timberjack.common.felling.TimberjackEventHandler;
 import net.minecraft.command.CommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;

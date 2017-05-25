@@ -5,7 +5,7 @@
  * see LICENSE in root folder for details.
  */
 
-package mods.timberjack.commands;
+package mods.timberjack.common.commands;
 
 import com.google.gson.JsonParseException;
 import net.minecraft.command.CommandException;

@@ -5,7 +5,7 @@
  * see LICENSE in root folder for details.
  */
 
-package mods.timberjack;
+package mods.timberjack.common;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraftforge.common.config.Configuration;

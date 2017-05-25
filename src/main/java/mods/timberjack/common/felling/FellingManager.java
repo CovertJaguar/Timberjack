@@ -5,9 +5,10 @@
  * see LICENSE in root folder for details.
  */
 
-package mods.timberjack;
+package mods.timberjack.common.felling;
 
 import com.google.common.collect.MapMaker;
+import mods.timberjack.common.TimberjackConfig;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -16,8 +17,6 @@ import net.minecraft.world.World;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
-import static mods.timberjack.TimberjackUtils.*;
 
 /**
  * Created by CovertJaguar on 4/15/2017 for Railcraft.
@@ -148,10 +147,10 @@ public class FellingManager {
         }
 
         private void buildTree() {
-            iterateBlocks(1, choppedBlock, targetPos -> {
+            TimberjackUtils.iterateBlocks(1, choppedBlock, targetPos -> {
                 if (!contains(targetPos)) {
                     IBlockState targetState = world.getBlockState(targetPos);
-                    if (isWood(targetState, world, targetPos)) {
+                    if (TimberjackUtils.isWood(targetState, world, targetPos)) {
                         scanNewBranch(targetPos.toImmutable());
                     }
                 }
@@ -169,12 +168,12 @@ public class FellingManager {
         }
 
         private void fellLog(BlockPos logPos) {
-            spawnFallingLog(world, logPos, centroid);
-            iterateBlocks(4, logPos, targetPos -> {
+            TimberjackUtils.spawnFallingLog(world, logPos, centroid);
+            TimberjackUtils.iterateBlocks(4, logPos, targetPos -> {
                 IBlockState targetState = world.getBlockState(targetPos);
-                if (isLeaves(targetState, world, targetPos)) {
-                    spawnFallingLeaves(world, targetPos, logPos, centroid, targetState);
-                } else if (isWood(targetState, world, targetPos) && !contains(targetPos)) {
+                if (TimberjackUtils.isLeaves(targetState, world, targetPos)) {
+                    TimberjackUtils.spawnFallingLeaves(world, targetPos, logPos, centroid, targetState);
+                } else if (TimberjackUtils.isWood(targetState, world, targetPos) && !contains(targetPos)) {
                     scanNewBranch(targetPos.toImmutable());
                 }
             });
@@ -208,7 +207,7 @@ public class FellingManager {
                 targetPos.move(EnumFacing.DOWN);
                 if (!tree.contains(targetPos)) {
                     IBlockState targetState = world.getBlockState(targetPos);
-                    if (isDirt(targetState, world, targetPos)) {
+                    if (TimberjackUtils.isDirt(targetState, world, targetPos)) {
                         rooted = true;
                     }
                 }
@@ -224,16 +223,16 @@ public class FellingManager {
             logsToExpand.add(root);
             BlockPos nextBlock;
             while ((nextBlock = logsToExpand.poll()) != null && !tree.isTreehouse) {
-                iterateBlocks(1, nextBlock, targetPos -> {
+                TimberjackUtils.iterateBlocks(1, nextBlock, targetPos -> {
                     if (!tree.contains(targetPos)) {
                         IBlockState targetState = world.getBlockState(targetPos);
-                        if (isWood(targetState, world, targetPos)) {
+                        if (TimberjackUtils.isWood(targetState, world, targetPos)) {
                             if (tree.size() < TimberjackConfig.getMaxLogsProcessed()) {
                                 logsToExpand.addLast(addLog(targetPos));
                             }
-                        } else if (!hasLeaves && isLeaves(targetState, world, targetPos)) {
+                        } else if (!hasLeaves && TimberjackUtils.isLeaves(targetState, world, targetPos)) {
                             hasLeaves = true;
-                        } else if (isHouse(targetState, world, targetPos)) {
+                        } else if (TimberjackUtils.isHouse(targetState, world, targetPos)) {
                             tree.isTreehouse = true;
                         }
                     }

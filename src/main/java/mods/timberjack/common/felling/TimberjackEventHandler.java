@@ -5,15 +5,13 @@
  * see LICENSE in root folder for details.
  */
 
-package mods.timberjack;
+package mods.timberjack.common.felling;
 
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
-
-import static mods.timberjack.TimberjackUtils.isWood;
 
 /**
  * Created by CovertJaguar on 4/12/2017 for Railcraft.
@@ -49,7 +47,7 @@ public class TimberjackEventHandler {
     @SubscribeEvent
     public void chopEvent(BlockEvent.BreakEvent event) {
         World world = event.getWorld();
-        if (isWood(event.getState(), world, event.getPos())) {
+        if (TimberjackUtils.isWood(event.getState(), world, event.getPos())) {
             FellingManager.fellingManagers.computeIfAbsent(world, FellingManager::new).onChop(event.getPos());
         }
     }
