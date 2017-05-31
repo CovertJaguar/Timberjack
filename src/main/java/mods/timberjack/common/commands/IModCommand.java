@@ -21,7 +21,9 @@ public interface IModCommand extends ICommand {
 
     String getFullCommandString();
 
-    int getRequiredPermissionLevel();
+    default int getPermissionLevel() {
+        return 0;
+    }
 
     SortedSet<SubCommand> getChildren();
 

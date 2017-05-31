@@ -78,7 +78,7 @@ public class CommandHelpers {
     }
 
     public static void executeChildCommand(MinecraftServer server, ICommandSender sender, SubCommand child, String[] args) throws CommandException {
-        if (!sender.canCommandSenderUseCommand(child.getRequiredPermissionLevel(), child.getFullCommandString()))
+        if (!sender.canCommandSenderUseCommand(child.getPermissionLevel(), child.getFullCommandString()))
             throw new WrongUsageException(I18n.translateToLocal(LOC_PREFIX + "noperms"));
         String[] newArgs = new String[args.length - 1];
         System.arraycopy(args, 1, newArgs, 0, newArgs.length);
@@ -92,7 +92,7 @@ public class CommandHelpers {
         Style body = new Style();
         body.setColor(TextFormatting.GRAY);
         sendLocalizedChatMessage(sender, body, LOC_PREFIX + "aliases", command.getCommandAliases().toString().replace("[", "").replace("]", ""));
-        sendLocalizedChatMessage(sender, body, LOC_PREFIX + "permlevel", command.getRequiredPermissionLevel());
+        sendLocalizedChatMessage(sender, body, LOC_PREFIX + "permlevel", command.getPermissionLevel());
         sendLocalizedChatMessage(sender, body, LOC_PREFIX + command.getFullCommandString().replace(" ", ".") + ".help");
         if (!command.getChildren().isEmpty()) {
             sendLocalizedChatMessage(sender, LOC_PREFIX + "list");
