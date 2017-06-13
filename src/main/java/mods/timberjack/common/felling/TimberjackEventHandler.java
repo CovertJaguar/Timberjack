@@ -9,7 +9,6 @@ package mods.timberjack.common.felling;
 
 import mods.timberjack.common.TimberjackConfig;
 import net.minecraft.block.BlockLog;
-import net.minecraft.block.BlockPistonBase;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.item.EntityFallingBlock;
 import net.minecraft.util.EnumFacing;
@@ -74,7 +73,7 @@ public class TimberjackEventHandler {
             if (world.rand.nextFloat() < 0.1) {
                 fellingDirection = EnumFacing.HORIZONTALS[new Random().nextInt(EnumFacing.HORIZONTALS.length)];
             } else {
-                fellingDirection = BlockPistonBase.getFacingFromEntity(event.getPos(), event.getPlayer()).getOpposite();
+                fellingDirection = EnumFacing.getDirectionFromEntityLiving(event.getPos(), event.getPlayer()).getOpposite();
             }
             FellingManager.fellingManagers.computeIfAbsent(world, FellingManager::new).onChop(event.getPos(), fellingDirection);
         }

@@ -17,6 +17,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.MoverType;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
@@ -121,13 +122,13 @@ public class EntityTimber extends Entity implements IEntityAdditionalSpawnData {
             if (this.fallTime++ == 0) {
                 BlockPos currentPos = new BlockPos(this);
 
-                IBlockState state = this.worldObj.getBlockState(currentPos);
+                IBlockState state = this.world.getBlockState(currentPos);
                 if (state.getBlock() == block) {
                     if (!log) {
-                        drops.addAll(block.getDrops(worldObj, currentPos, state, 0));
+                        drops.addAll(block.getDrops(world, currentPos, state, 0));
                     }
-                    this.worldObj.setBlockToAir(currentPos);
-                } else if (!this.worldObj.isRemote) {
+                    this.world.setBlockToAir(currentPos);
+                } else if (!this.world.isRemote) {
                     this.setDead();
                     return;
                 }
@@ -137,22 +138,22 @@ public class EntityTimber extends Entity implements IEntityAdditionalSpawnData {
                 this.motionY -= 0.03D;
             }
 
-            this.moveEntity(this.motionX, this.motionY, this.motionZ);
+            this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
 //            this.motionX *= 0.9800000190734863D;
             this.motionY *= 0.98D;
 //            this.motionZ *= 0.9800000190734863D;
 
-            if (!this.worldObj.isRemote) {
+            if (!this.world.isRemote) {
                 BlockPos currentPos = new BlockPos(this);
 
                 BlockPos belowPos = new BlockPos(this.posX, this.posY - 0.001D, this.posZ);
                 if (this.onGround && isBlocked(belowPos)) {
                     if (canBreakThrough(belowPos)) {
-                        worldObj.destroyBlock(belowPos, doTileDrops());
+                        world.destroyBlock(belowPos, doTileDrops());
                         return;
                     }
 
-                    IBlockState occupiedState = this.worldObj.getBlockState(currentPos);
+                    IBlockState occupiedState = this.world.getBlockState(currentPos);
 
                     this.motionX *= 0.699999988079071D;
                     this.motionZ *= 0.699999988079071D;
@@ -165,7 +166,7 @@ public class EntityTimber extends Entity implements IEntityAdditionalSpawnData {
                                 && placeBlock(occupiedState, currentPos)) {
 
                             if (this.tileEntityData != null && block instanceof ITileEntityProvider) {
-                                TileEntity tileentity = this.worldObj.getTileEntity(currentPos);
+                                TileEntity tileentity = this.world.getTileEntity(currentPos);
 
                                 if (tileentity != null) {
                                     NBTTagCompound nbt = tileentity.writeToNBT(new NBTTagCompound());
@@ -183,12 +184,12 @@ public class EntityTimber extends Entity implements IEntityAdditionalSpawnData {
                                 }
                             }
 
-                            IBlockState state = worldObj.getBlockState(currentPos);
+                            IBlockState state = world.getBlockState(currentPos);
                             if (log) {
                                 rotateLog(state, currentPos);
                             }
 
-                            state.getBlock().beginLeavesDecay(state, worldObj, currentPos);
+                            state.getBlock().beginLeavesDecay(state, world, currentPos);
 
                         } else if (this.shouldDropItem && doTileDrops()) {
                             dropItems();
@@ -217,14 +218,14 @@ public class EntityTimber extends Entity implements IEntityAdditionalSpawnData {
 
     public void fall(float distance, float damageMultiplier) {
         if (this.hurtEntities) {
-            int i = MathHelper.ceiling_float_int(distance - 1.0F);
+            int i = MathHelper.ceil(distance - 1.0F);
 
             if (i > 0) {
-                List<Entity> list = Lists.newArrayList(this.worldObj.getEntitiesWithinAABBExcludingEntity(this, this.getEntityBoundingBox()));
-                DamageSource damagesource = DamageSource.fallingBlock;
+                List<Entity> list = Lists.newArrayList(this.world.getEntitiesWithinAABBExcludingEntity(this, this.getEntityBoundingBox()));
+                DamageSource damagesource = DamageSource.FALLING_BLOCK;
 
                 for (Entity entity : list) {
-                    entity.attackEntityFrom(damagesource, (float) Math.min(MathHelper.floor_float((float) i * this.fallHurtAmount), this.fallHurtMax));
+                    entity.attackEntityFrom(damagesource, (float) Math.min(MathHelper.floor((float) i * this.fallHurtAmount), this.fallHurtMax));
                 }
             }
         }
@@ -232,32 +233,32 @@ public class EntityTimber extends Entity implements IEntityAdditionalSpawnData {
 
     private boolean canPlaceBlock(IBlockState occupiedState, BlockPos currentPos) {
         Block block = this.fallingBlock.getBlock();
-        return worldObj.canBlockBePlaced(block, currentPos, true, EnumFacing.UP, null, null)
-                || (log && occupiedState.getBlock().isLeaves(occupiedState, worldObj, currentPos));
+        return world.mayPlace(block, currentPos, true, EnumFacing.UP, null)
+                || (log && occupiedState.getBlock().isLeaves(occupiedState, world, currentPos));
     }
 
     private boolean placeBlock(IBlockState occupiedState, BlockPos currentPos) {
-        worldObj.destroyBlock(currentPos, doTileDrops());
-        return worldObj.setBlockState(currentPos, this.fallingBlock, 3);
+        world.destroyBlock(currentPos, doTileDrops());
+        return world.setBlockState(currentPos, this.fallingBlock, 3);
     }
 
     private boolean isBlocked(BlockPos pos) {
-        IBlockState state = this.worldObj.getBlockState(pos);
+        IBlockState state = this.world.getBlockState(pos);
         return !BlockFalling.canFallThrough(state);
     }
 
     private boolean canBreakThrough(BlockPos pos) {
-        IBlockState state = this.worldObj.getBlockState(pos);
+        IBlockState state = this.world.getBlockState(pos);
         Material material = state.getMaterial();
         if (material == Material.PLANTS)
             return true;
         if (!log)
             return false;
-        return material == Material.LEAVES || material == Material.VINE || material == Material.PLANTS || state.getBlock().isLeaves(state, worldObj, pos);
+        return material == Material.LEAVES || material == Material.VINE || material == Material.PLANTS || state.getBlock().isLeaves(state, world, pos);
     }
 
     private boolean doTileDrops() {
-        return worldObj.getGameRules().getBoolean("doEntityDrops");
+        return world.getGameRules().getBoolean("doEntityDrops");
     }
 
     public void rotateLog(IBlockState state, BlockPos pos) {
@@ -274,7 +275,7 @@ public class EntityTimber extends Entity implements IEntityAdditionalSpawnData {
                     axis = BlockLog.EnumAxis.Y;
             }
             IBlockState newState = state.withProperty(BlockLog.LOG_AXIS, axis);
-            worldObj.setBlockState(pos, newState);
+            world.setBlockState(pos, newState);
         }
     }
 

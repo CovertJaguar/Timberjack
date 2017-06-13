@@ -12,6 +12,7 @@ import mods.timberjack.common.commands.RootCommand;
 import mods.timberjack.common.entity.EntityTimber;
 import mods.timberjack.common.felling.TimberjackEventHandler;
 import net.minecraft.command.CommandHandler;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
@@ -40,7 +41,7 @@ public class Timberjack {
     public void preInit(FMLPreInitializationEvent event) {
         TimberjackConfig.load(event.getModConfigurationDirectory());
 
-        EntityRegistry.registerModEntity(EntityTimber.class, "timber", 0, this, 160, 20, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MOD_ID, "falling_block"), EntityTimber.class, "timber", 0, this, 160, 20, true);
 
         proxy.preInit();
     }

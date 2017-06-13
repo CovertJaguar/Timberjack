@@ -100,7 +100,7 @@ public abstract class SubCommand implements IModCommand {
 
     @Override
     public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-        return sender.canUseCommand(getPermissionLevel(), getCommandName());
+        return sender.canUseCommand(getPermissionLevel(), getName());
     }
 
     @Override
