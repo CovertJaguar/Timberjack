@@ -1,4 +1,6 @@
-﻿command.timberjack.aliases=Aliases: %s
+﻿# Timberjack Localization File
+
+command.timberjack.aliases=Aliases: %s
 command.timberjack.help=Type '%s' for help.
 command.timberjack.list=Available Sub-Commands:
 command.timberjack.permlevel=Permission Level: %s

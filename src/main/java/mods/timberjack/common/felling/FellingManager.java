@@ -66,8 +66,8 @@ public class FellingManager {
         });
     }
 
-    void onChop(BlockPos pos) {
-        Tree tree = new Tree(pos);
+    void onChop(BlockPos pos, EnumFacing fellingDirection) {
+        Tree tree = new Tree(pos, fellingDirection);
         tree.buildTree();
         tree.queueForFelling();
     }
@@ -80,9 +80,11 @@ public class FellingManager {
         private final BlockPos choppedBlock;
         private Vec3d centroid = Vec3d.ZERO;
         private boolean isTreehouse;
+        private final EnumFacing fellingDirection;
 
-        Tree(BlockPos choppedBlock) {
+        Tree(BlockPos choppedBlock, EnumFacing fellingDirection) {
             this.choppedBlock = choppedBlock;
+            this.fellingDirection = fellingDirection;
             makeBranch(choppedBlock);
         }
 
@@ -168,11 +170,11 @@ public class FellingManager {
         }
 
         private void fellLog(BlockPos logPos) {
-            TimberjackUtils.spawnFallingLog(world, logPos, centroid);
+            TimberjackUtils.spawnFallingLog(world, logPos, centroid, fellingDirection);
             TimberjackUtils.iterateBlocks(4, logPos, targetPos -> {
                 IBlockState targetState = world.getBlockState(targetPos);
                 if (TimberjackUtils.isLeaves(targetState, world, targetPos)) {
-                    TimberjackUtils.spawnFallingLeaves(world, targetPos, logPos, centroid, targetState);
+                    TimberjackUtils.spawnFallingLeaves(world, targetPos, logPos, centroid, targetState, fellingDirection);
                 } else if (TimberjackUtils.isWood(targetState, world, targetPos) && !contains(targetPos)) {
                     scanNewBranch(targetPos.toImmutable());
                 }

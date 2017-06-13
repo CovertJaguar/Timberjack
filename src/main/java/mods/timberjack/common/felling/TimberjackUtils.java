@@ -8,10 +8,10 @@
 package mods.timberjack.common.felling;
 
 import mods.timberjack.common.TimberjackConfig;
+import mods.timberjack.common.entity.EntityTimber;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.item.EntityFallingBlock;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -91,11 +91,11 @@ class TimberjackUtils {
         return false;
     }
 
-    static void spawnFallingLog(World world, BlockPos logPos, Vec3d centroid) {
-        spawnFalling(world, logPos, centroid, world.getBlockState(logPos), true);
+    static void spawnFallingLog(World world, BlockPos logPos, Vec3d centroid, EnumFacing fellingDirection) {
+        spawnFalling(world, logPos, centroid, world.getBlockState(logPos), fellingDirection, true);
     }
 
-    static void spawnFallingLeaves(World world, BlockPos.MutableBlockPos pos, BlockPos logPos, Vec3d centroid, IBlockState state) {
+    static void spawnFallingLeaves(World world, BlockPos.MutableBlockPos pos, BlockPos logPos, Vec3d centroid, IBlockState state, EnumFacing fellingDirection) {
         pos.move(EnumFacing.DOWN);
         IBlockState belowState = world.getBlockState(pos);
         boolean canFall = belowState.getBlock().isAir(belowState, world, pos)
@@ -105,17 +105,18 @@ class TimberjackUtils {
         pos.move(EnumFacing.UP);
 
         if (canFall)
-            spawnFalling(world, pos, centroid, state, false);
+            spawnFalling(world, pos, centroid, state, fellingDirection, false);
     }
 
-    private static void spawnFalling(World world, BlockPos pos, Vec3d centroid, IBlockState state, boolean log) {
-        EntityFallingBlock entity = new EntityFallingBlock(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, state);
-        Vec3d vector = new Vec3d(pos);
-        vector = vector.subtract(centroid);
+    private static void spawnFalling(World world, BlockPos pos, Vec3d centroid, IBlockState state, EnumFacing fellingDirection, boolean log) {
+        EntityTimber entity = new EntityTimber(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, state, fellingDirection, log);
+        Vec3d vector = new Vec3d(pos.getX(), 0, pos.getZ());
+        vector = vector.subtract(centroid.xCoord, 0, centroid.zCoord);
+        vector = vector.normalize().scale(0.5);
+        vector = vector.add(new Vec3d(fellingDirection.getDirectionVec()));
         vector = vector.normalize();
-        entity.motionX = vector.xCoord * 0.4 + (world.rand.nextFloat() - 0.5) * 0.4;
-        entity.motionZ = vector.zCoord * 0.4 + (world.rand.nextFloat() - 0.5) * 0.4;
-        entity.shouldDropItem = log;
+        entity.motionX = vector.xCoord * 0.3 + (world.rand.nextFloat() - 0.5) * 0.15;
+        entity.motionZ = vector.zCoord * 0.3 + (world.rand.nextFloat() - 0.5) * 0.15;
         entity.setHurtEntities(log);
         world.spawnEntityInWorld(entity);
     }

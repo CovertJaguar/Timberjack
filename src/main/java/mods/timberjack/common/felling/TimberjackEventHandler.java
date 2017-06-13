@@ -7,11 +7,17 @@
 
 package mods.timberjack.common.felling;
 
+import net.minecraft.block.BlockPistonBase;
+import net.minecraft.entity.item.EntityFallingBlock;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
+
+import java.util.Random;
 
 /**
  * Created by CovertJaguar on 4/12/2017 for Railcraft.
@@ -32,6 +38,13 @@ public class TimberjackEventHandler {
         }
     }
 
+    public void entityJoin(EntityJoinWorldEvent event) {
+        if (event.getEntity() instanceof EntityFallingBlock) {
+            EntityFallingBlock falling = (EntityFallingBlock) event.getEntity();
+
+        }
+    }
+
 //    @SubscribeEvent
 //    public void breakSpeedEvent(PlayerEvent.BreakSpeed event) {
 //        World world = event.getEntity().worldObj;
@@ -48,7 +61,13 @@ public class TimberjackEventHandler {
     public void chopEvent(BlockEvent.BreakEvent event) {
         World world = event.getWorld();
         if (TimberjackUtils.isWood(event.getState(), world, event.getPos())) {
-            FellingManager.fellingManagers.computeIfAbsent(world, FellingManager::new).onChop(event.getPos());
+            EnumFacing fellingDirection;
+            if (world.rand.nextFloat() < 0.1) {
+                fellingDirection = EnumFacing.HORIZONTALS[new Random().nextInt(EnumFacing.HORIZONTALS.length)];
+            } else {
+                fellingDirection = BlockPistonBase.getFacingFromEntity(event.getPos(), event.getPlayer()).getOpposite();
+            }
+            FellingManager.fellingManagers.computeIfAbsent(world, FellingManager::new).onChop(event.getPos(), fellingDirection);
         }
     }
 }
