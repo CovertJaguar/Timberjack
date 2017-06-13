@@ -5,7 +5,7 @@
  * see LICENSE in root folder for details.
  */
 
-package mods.timberjack.commands;
+package mods.timberjack.common.commands;
 
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
@@ -94,13 +94,13 @@ public abstract class SubCommand implements IModCommand {
     }
 
     @Override
-    public final int getRequiredPermissionLevel() {
+    public final int getPermissionLevel() {
         return permLevel.permLevel;
     }
 
     @Override
     public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-        return sender.canUseCommand(getRequiredPermissionLevel(), getName());
+        return sender.canUseCommand(getPermissionLevel(), getCommandName());
     }
 
     @Override

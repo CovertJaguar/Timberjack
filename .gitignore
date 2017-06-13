@@ -18,7 +18,6 @@ build
 .gradle
 .nb-gradle
 .nb-gradle-properties
-/gradle.properties
 
 # other
 eclipse

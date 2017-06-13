@@ -5,7 +5,7 @@
  * see LICENSE in root folder for details.
  */
 
-package mods.timberjack.commands;
+package mods.timberjack.common.commands;
 
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
@@ -21,7 +21,9 @@ public interface IModCommand extends ICommand {
 
     String getFullCommandString();
 
-    int getRequiredPermissionLevel();
+    default int getPermissionLevel() {
+        return 0;
+    }
 
     SortedSet<SubCommand> getChildren();
 

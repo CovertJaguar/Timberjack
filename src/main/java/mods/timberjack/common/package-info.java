@@ -7,7 +7,7 @@
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
-package mods.timberjack.commands;
+package mods.timberjack.common;
 
 import mcp.MethodsReturnNonnullByDefault;
 

@@ -5,9 +5,10 @@
  * see LICENSE in root folder for details.
  */
 
-package mods.timberjack;
+package mods.timberjack.common.felling;
 
 import com.google.common.collect.MapMaker;
+import mods.timberjack.common.TimberjackConfig;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -16,9 +17,6 @@ import net.minecraft.world.World;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentSkipListSet;
-
-import static mods.timberjack.TimberjackUtils.*;
 
 /**
  * Created by CovertJaguar on 4/15/2017 for Railcraft.
@@ -56,6 +54,7 @@ public class FellingManager {
 //                return;
 //        if(!fellQueue.isEmpty())
 //            System.out.printf("Felling %d trees\n", fellQueue.size());
+        fellQueue.removeIf(tree -> !tree.hasLogsToFell());
         fellQueue.forEach(tree -> {
             tree.prepForFelling();
             Iterator<BlockPos> it = tree.logsToFell.iterator();
@@ -65,11 +64,10 @@ public class FellingManager {
                 it.remove();
             }
         });
-        fellQueue.removeIf(tree -> !tree.hasLogsToFell());
     }
 
-    void onChop(BlockPos pos) {
-        Tree tree = new Tree(pos);
+    void onChop(BlockPos pos, EnumFacing fellingDirection) {
+        Tree tree = new Tree(pos, fellingDirection);
         tree.buildTree();
         tree.queueForFelling();
     }
@@ -81,9 +79,12 @@ public class FellingManager {
         private List<BlockPos> newLogsToFell = new LinkedList<>();
         private final BlockPos choppedBlock;
         private Vec3d centroid = Vec3d.ZERO;
+        private boolean isTreehouse;
+        private final EnumFacing fellingDirection;
 
-        Tree(BlockPos choppedBlock) {
+        Tree(BlockPos choppedBlock, EnumFacing fellingDirection) {
             this.choppedBlock = choppedBlock;
+            this.fellingDirection = fellingDirection;
             makeBranch(choppedBlock);
         }
 
@@ -138,7 +139,7 @@ public class FellingManager {
         }
 
         boolean hasLogsToFell() {
-            return !logsToFell.isEmpty() || !newLogsToFell.isEmpty();
+            return !isTreehouse && (!logsToFell.isEmpty() || !newLogsToFell.isEmpty());
         }
 
         Branch makeBranch(BlockPos pos) {
@@ -148,10 +149,10 @@ public class FellingManager {
         }
 
         private void buildTree() {
-            iterateBlocks(1, choppedBlock, targetPos -> {
+            TimberjackUtils.iterateBlocks(1, choppedBlock, targetPos -> {
                 if (!contains(targetPos)) {
                     IBlockState targetState = world.getBlockState(targetPos);
-                    if (isWood(targetState, world, targetPos)) {
+                    if (TimberjackUtils.isWood(targetState, world, targetPos)) {
                         scanNewBranch(targetPos.toImmutable());
                     }
                 }
@@ -169,12 +170,12 @@ public class FellingManager {
         }
 
         private void fellLog(BlockPos logPos) {
-            spawnFallingLog(world, logPos, centroid);
-            iterateBlocks(4, logPos, targetPos -> {
+            TimberjackUtils.spawnFallingLog(world, logPos, centroid, fellingDirection);
+            TimberjackUtils.iterateBlocks(4, logPos, targetPos -> {
                 IBlockState targetState = world.getBlockState(targetPos);
-                if (isLeaves(targetState, world, targetPos)) {
-                    spawnFallingLeaves(world, targetPos, logPos, centroid, targetState);
-                } else if (isWood(targetState, world, targetPos) && !contains(targetPos)) {
+                if (TimberjackUtils.isLeaves(targetState, world, targetPos)) {
+                    TimberjackUtils.spawnFallingLeaves(world, targetPos, logPos, centroid, targetState, fellingDirection);
+                } else if (TimberjackUtils.isWood(targetState, world, targetPos) && !contains(targetPos)) {
                     scanNewBranch(targetPos.toImmutable());
                 }
             });
@@ -208,7 +209,7 @@ public class FellingManager {
                 targetPos.move(EnumFacing.DOWN);
                 if (!tree.contains(targetPos)) {
                     IBlockState targetState = world.getBlockState(targetPos);
-                    if (isDirt(targetState, world, targetPos)) {
+                    if (TimberjackUtils.isDirt(targetState, world, targetPos)) {
                         rooted = true;
                     }
                 }
@@ -220,25 +221,24 @@ public class FellingManager {
             if (tree.size() >= TimberjackConfig.getMaxLogsProcessed())
                 return;
 
-            Collection<BlockPos> logsToExpand = new ConcurrentSkipListSet<>();
+            Deque<BlockPos> logsToExpand = new ArrayDeque<>();
             logsToExpand.add(root);
-            while (!logsToExpand.isEmpty()) {
-                Iterator<BlockPos> it = logsToExpand.iterator();
-                while (it.hasNext()) {
-                    BlockPos log = it.next();
-                    iterateBlocks(1, log, targetPos -> {
-                        if (!tree.contains(targetPos)) {
-                            IBlockState targetState = world.getBlockState(targetPos);
-                            if (isWood(targetState, world, targetPos)) {
-                                if (tree.size() < TimberjackConfig.getMaxLogsProcessed()) {
-                                    logsToExpand.add(addLog(targetPos));
-                                }
-                            } else if (!hasLeaves && isLeaves(targetState, world, targetPos))
-                                hasLeaves = true;
+            BlockPos nextBlock;
+            while ((nextBlock = logsToExpand.poll()) != null && !tree.isTreehouse) {
+                TimberjackUtils.iterateBlocks(1, nextBlock, targetPos -> {
+                    if (!tree.contains(targetPos)) {
+                        IBlockState targetState = world.getBlockState(targetPos);
+                        if (TimberjackUtils.isWood(targetState, world, targetPos)) {
+                            if (tree.size() < TimberjackConfig.getMaxLogsProcessed()) {
+                                logsToExpand.addLast(addLog(targetPos));
+                            }
+                        } else if (!hasLeaves && TimberjackUtils.isLeaves(targetState, world, targetPos)) {
+                            hasLeaves = true;
+                        } else if (TimberjackUtils.isHouse(targetState, world, targetPos)) {
+                            tree.isTreehouse = true;
                         }
-                    });
-                    it.remove();
-                }
+                    }
+                });
             }
         }
     }
