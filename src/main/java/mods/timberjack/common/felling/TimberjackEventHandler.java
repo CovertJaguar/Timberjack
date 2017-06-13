@@ -7,7 +7,9 @@
 
 package mods.timberjack.common.felling;
 
+import net.minecraft.block.BlockLog;
 import net.minecraft.block.BlockPistonBase;
+import net.minecraft.block.material.Material;
 import net.minecraft.entity.item.EntityFallingBlock;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
@@ -38,10 +40,16 @@ public class TimberjackEventHandler {
         }
     }
 
+    @SubscribeEvent
     public void entityJoin(EntityJoinWorldEvent event) {
         if (event.getEntity() instanceof EntityFallingBlock) {
             EntityFallingBlock falling = (EntityFallingBlock) event.getEntity();
-
+            if (falling.getBlock() != null) {
+                if (falling.getBlock().getBlock() instanceof BlockLog || falling.getBlock().getMaterial() == Material.LEAVES) {
+                    if (falling.fallTime > 600)
+                        falling.setDead();
+                }
+            }
         }
     }
 
