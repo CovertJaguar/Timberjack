@@ -51,7 +51,7 @@ public class EntityTimber extends Entity implements IEntityAdditionalSpawnData {
     private float fallHurtAmount = 2.0F;
     private NBTTagCompound tileEntityData;
     private List<ItemStack> drops = new ArrayList<>();
-    private EnumFacing fellingDirection;
+    private EnumFacing fellingDirection = EnumFacing.UP;
 
     public EntityTimber(World worldIn) {
         super(worldIn);
@@ -123,7 +123,7 @@ public class EntityTimber extends Entity implements IEntityAdditionalSpawnData {
 
                 IBlockState state = this.worldObj.getBlockState(currentPos);
                 if (state.getBlock() == block) {
-                    if (!log) {
+                    if (!this.worldObj.isRemote && !log) {
                         drops.addAll(block.getDrops(worldObj, currentPos, state, 0));
                     }
                     this.worldObj.setBlockToAir(currentPos);
@@ -260,7 +260,7 @@ public class EntityTimber extends Entity implements IEntityAdditionalSpawnData {
         return worldObj.getGameRules().getBoolean("doEntityDrops");
     }
 
-    public void rotateLog(IBlockState state, BlockPos pos) {
+    private void rotateLog(IBlockState state, BlockPos pos) {
         if (state.getBlock() instanceof BlockLog && state.getProperties().containsKey(BlockLog.LOG_AXIS)) {
             BlockLog.EnumAxis axis;
             switch (fellingDirection.getAxis()) {
@@ -273,8 +273,10 @@ public class EntityTimber extends Entity implements IEntityAdditionalSpawnData {
                 default:
                     axis = BlockLog.EnumAxis.Y;
             }
-            IBlockState newState = state.withProperty(BlockLog.LOG_AXIS, axis);
-            worldObj.setBlockState(pos, newState);
+            if (axis != BlockLog.EnumAxis.Y) {
+                IBlockState newState = state.withProperty(BlockLog.LOG_AXIS, axis);
+                worldObj.setBlockState(pos, newState);
+            }
         }
     }
 
@@ -291,7 +293,7 @@ public class EntityTimber extends Entity implements IEntityAdditionalSpawnData {
         compound.setBoolean("HurtEntities", this.hurtEntities);
         compound.setFloat("FallHurtAmount", this.fallHurtAmount);
         compound.setInteger("FallHurtMax", this.fallHurtMax);
-        compound.setInteger("FallingDirection", this.fellingDirection.ordinal());
+        compound.setInteger("FellingDirection", this.fellingDirection.ordinal());
 
         if (this.tileEntityData != null) {
             compound.setTag("TileEntityData", this.tileEntityData);
@@ -329,7 +331,7 @@ public class EntityTimber extends Entity implements IEntityAdditionalSpawnData {
             this.tileEntityData = compound.getCompoundTag("TileEntityData");
         }
 
-        this.fellingDirection = EnumFacing.VALUES[compound.getInteger("FallingDirection")];
+        this.fellingDirection = EnumFacing.VALUES[compound.getInteger("FellingDirection")];
 
         if (block == null || block.getDefaultState().getMaterial() == Material.AIR) {
             this.fallingBlock = Blocks.LOG.getDefaultState();
@@ -370,10 +372,14 @@ public class EntityTimber extends Entity implements IEntityAdditionalSpawnData {
     @Override
     public void writeSpawnData(ByteBuf buffer) {
         buffer.writeInt(Block.getStateId(fallingBlock));
+        buffer.writeBoolean(log);
+        buffer.writeByte(fellingDirection.ordinal());
     }
 
     @Override
     public void readSpawnData(ByteBuf additionalData) {
-        fallingBlock = Block.getStateById(additionalData.getInt(additionalData.readerIndex()) & 65535);
+        fallingBlock = Block.getStateById(additionalData.readInt() & 65535);
+        log = additionalData.readBoolean();
+        fellingDirection = EnumFacing.VALUES[additionalData.readByte()];
     }
 }

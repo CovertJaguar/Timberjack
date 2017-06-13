@@ -72,11 +72,17 @@ public class TimberjackEventHandler {
         if ((!event.getPlayer().isSneaking() || !TimberjackConfig.sneakingPreventsFelling()) && TimberjackUtils.isWood(event.getState(), world, event.getPos())) {
             EnumFacing fellingDirection;
             if (world.rand.nextFloat() < 0.1) {
-                fellingDirection = EnumFacing.HORIZONTALS[new Random().nextInt(EnumFacing.HORIZONTALS.length)];
+                fellingDirection = getRandomHorizontalFacing();
             } else {
                 fellingDirection = BlockPistonBase.getFacingFromEntity(event.getPos(), event.getPlayer()).getOpposite();
+                if (fellingDirection.getAxis() == EnumFacing.Axis.Y)
+                    fellingDirection = getRandomHorizontalFacing();
             }
             FellingManager.fellingManagers.computeIfAbsent(world, FellingManager::new).onChop(event.getPos(), fellingDirection);
         }
+    }
+
+    private EnumFacing getRandomHorizontalFacing() {
+        return EnumFacing.HORIZONTALS[new Random().nextInt(EnumFacing.HORIZONTALS.length)];
     }
 }
