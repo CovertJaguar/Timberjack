@@ -7,6 +7,7 @@
 
 package mods.timberjack.common.felling;
 
+import mods.timberjack.common.TimberjackConfig;
 import net.minecraft.block.BlockLog;
 import net.minecraft.block.BlockPistonBase;
 import net.minecraft.block.material.Material;
@@ -68,7 +69,7 @@ public class TimberjackEventHandler {
     @SubscribeEvent
     public void chopEvent(BlockEvent.BreakEvent event) {
         World world = event.getWorld();
-        if (!event.getPlayer().isSneaking() && TimberjackUtils.isWood(event.getState(), world, event.getPos())) {
+        if ((!event.getPlayer().isSneaking() || !TimberjackConfig.sneakingPreventsFelling()) && TimberjackUtils.isWood(event.getState(), world, event.getPos())) {
             EnumFacing fellingDirection;
             if (world.rand.nextFloat() < 0.1) {
                 fellingDirection = EnumFacing.HORIZONTALS[new Random().nextInt(EnumFacing.HORIZONTALS.length)];
