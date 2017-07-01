@@ -111,12 +111,12 @@ class TimberjackUtils {
     private static void spawnFalling(World world, BlockPos pos, Vec3d centroid, IBlockState state, EnumFacing fellingDirection, boolean log) {
         EntityTimber entity = new EntityTimber(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, state, fellingDirection, log);
         Vec3d vector = new Vec3d(pos.getX(), 0, pos.getZ());
-        vector = vector.subtract(centroid.xCoord, 0, centroid.zCoord);
+        vector = vector.subtract(centroid.x, 0, centroid.z);
         vector = vector.normalize().scale(0.5);
         vector = vector.add(new Vec3d(fellingDirection.getDirectionVec()));
         vector = vector.normalize();
-        entity.motionX = vector.xCoord * 0.3 + (world.rand.nextFloat() - 0.5) * 0.15;
-        entity.motionZ = vector.zCoord * 0.3 + (world.rand.nextFloat() - 0.5) * 0.15;
+        entity.motionX = vector.x * 0.3 + (world.rand.nextFloat() - 0.5) * 0.15;
+        entity.motionZ = vector.z * 0.3 + (world.rand.nextFloat() - 0.5) * 0.15;
         entity.setHurtEntities(log);
         world.spawnEntity(entity);
     }
