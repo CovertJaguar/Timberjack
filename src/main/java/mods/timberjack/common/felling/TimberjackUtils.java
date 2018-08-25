@@ -113,7 +113,8 @@ class TimberjackUtils {
         Vec3d vector = new Vec3d(pos.getX(), 0, pos.getZ());
         vector = vector.subtract(centroid.xCoord, 0, centroid.zCoord);
         vector = vector.normalize().scale(0.5);
-        vector = vector.add(new Vec3d(fellingDirection.getDirectionVec()));
+        if (fellingDirection.getAxis() != EnumFacing.Axis.Y)
+            vector = vector.add(new Vec3d(fellingDirection.getDirectionVec()));
         vector = vector.normalize();
         entity.motionX = vector.xCoord * 0.3 + (world.rand.nextFloat() - 0.5) * 0.15;
         entity.motionZ = vector.zCoord * 0.3 + (world.rand.nextFloat() - 0.5) * 0.15;
